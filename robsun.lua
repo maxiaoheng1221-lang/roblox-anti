@@ -106,7 +106,7 @@ local function CreateESP(p)
     local bill = Instance.new("BillboardGui")
     bill.Name = randName()
     bill.Adornee = head
-    bill.Size = UDim2.new(0, 260, 0, 65)
+    bill.Size = UDim2.new(0, 200, 0, 48)
     bill.StudsOffset = Vector3.new(0, 2.8, 0)
     bill.AlwaysOnTop = true
     -- 【关键修复】用超大数值代替 0，防止游戏/反作弊把 0 当作默认距离(~200)做裁剪
@@ -116,36 +116,36 @@ local function CreateESP(p)
     bill.Parent = head
 
     local nameLab = Instance.new("TextLabel")
-    nameLab.Size = UDim2.new(1,0,0,26)
+    nameLab.Size = UDim2.new(1,0,0,18)
     nameLab.Position = UDim2.new(0,0,0,0)
     nameLab.BackgroundTransparency = 1
     nameLab.Text = p.Name
     nameLab.TextColor3 = p.Team and p.Team.TeamColor.Color or Color3.new(1,1,1)
-    nameLab.TextSize = 17
+    nameLab.TextSize = 13
     nameLab.Font = Enum.Font.GothamBold
     nameLab.TextXAlignment = Enum.TextXAlignment.Center
     nameLab.Visible = Config.ShowName
     nameLab.Parent = bill
 
     local jobLab = Instance.new("TextLabel")
-    jobLab.Size = UDim2.new(1,0,0,20)
-    jobLab.Position = UDim2.new(0,0,26,0)
+    jobLab.Size = UDim2.new(1,0,0,15)
+    jobLab.Position = UDim2.new(0,0,18,0)
     jobLab.BackgroundTransparency = 1
     jobLab.Text = GetJob(p)
     jobLab.TextColor3 = GetJobColor(GetJob(p))
-    jobLab.TextSize = 14
+    jobLab.TextSize = 11
     jobLab.Font = Enum.Font.GothamBold
     jobLab.TextXAlignment = Enum.TextXAlignment.Center
     jobLab.Visible = Config.ShowJob
     jobLab.Parent = bill
 
     local distLab = Instance.new("TextLabel")
-    distLab.Size = UDim2.new(1,0,0,18)
-    distLab.Position = UDim2.new(0,0,46,0)
+    distLab.Size = UDim2.new(1,0,0,14)
+    distLab.Position = UDim2.new(0,0,33,0)
     distLab.BackgroundTransparency = 1
     distLab.Text = ""
     distLab.TextColor3 = Color3.new(1,1,0)
-    distLab.TextSize = 13
+    distLab.TextSize = 10
     distLab.TextXAlignment = Enum.TextXAlignment.Center
     distLab.Visible = Config.ShowDistance
     distLab.Parent = bill
@@ -236,9 +236,9 @@ end)
 -- 回退到 PlayerGui（无 gethui 环境）
 -- ==============================================
 local function getUIParent()
-    -- gethui() 返回核心UI层容器，普通反作弊遍历 PlayerGui 找不到
     local ok, container = pcall(function()
-        return gethui and gethui() or PlayerGui
+        if gethui then return gethui() end
+        return LocalPlayer:WaitForChild("PlayerGui")
     end)
     if ok and container then return container end
     return LocalPlayer:WaitForChild("PlayerGui")
@@ -491,14 +491,21 @@ Tip.Font = Enum.Font.Gotham
 Tip.TextXAlignment = Enum.TextXAlignment.Center
 Tip.Parent = MainFrame
 
--- 拖动
+-- 拖动（全局输入 + 边界检测，不依赖 Frame.InputBegan，兼容 gethui 父容器）
 local isDragging = false
 local dragStartPos = Vector2.new()
 local frameStartPos = UDim2.new()
 
-MainFrame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-        or input.UserInputType == Enum.UserInputType.Touch then
+UserInputService.InputBegan:Connect(function(input)
+    if input.UserInputType ~= Enum.UserInputType.MouseButton1
+        and input.UserInputType ~= Enum.UserInputType.Touch then return end
+
+    local mouse = UserInputService:GetMouseLocation()
+    local pos = MainFrame.AbsolutePosition
+    local size = MainFrame.AbsoluteSize
+    -- 鼠标在面板范围内才开始拖（标题栏区域即可拖，不挡开关/滑块交互）
+    if mouse.X >= pos.X and mouse.X <= pos.X + size.X
+        and mouse.Y >= pos.Y and mouse.Y <= pos.Y + size.Y then
         isDragging = true
         dragStartPos = Vector2.new(input.Position.X, input.Position.Y)
         frameStartPos = MainFrame.Position
