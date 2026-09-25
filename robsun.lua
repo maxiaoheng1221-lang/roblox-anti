@@ -9,7 +9,7 @@ local Config = {
     ShowName = true,
     ShowJob = true,
     ShowDistance = true,
-    MaxDistance = 2000,
+    MaxDistance = 0,
     UpdateRate = 0.15,
     TeamCheck = false,
 }
